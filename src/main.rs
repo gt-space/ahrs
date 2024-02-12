@@ -4,6 +4,9 @@ use std::thread;
 use std::time::Duration;
 use std::fs::File;
 use std::io::Write;
+use gpio::Gpio;
+
+pub mod gpio;
 
 fn main() {
 	let mut spi = Spidev::open("/dev/spidev0.0").unwrap();
@@ -17,7 +20,13 @@ fn main() {
 	spi.configure(&imu_options)
 		.expect("failed to configure SPI for the IMU");
 
-	let mut f = match File::create("output.txt") {
+	let gpio0 = Gpio::open(36);
+	let clk = Pin::open(&gpio0, 26);
+	clk.mode(Output);
+	
+	clk.digital_write(Low);
+
+	let mut f = match File::create("log.txt") {
 		Ok(f) => f,
 		Err(e) => {
 			panic!("{}", e);
