@@ -1,3 +1,6 @@
+use libc::{c_int, c_void, off_t, size_t};
+use std::ffi::CString;
+
 const GPIO_BASE_REGISTERS: [off_t; 3] = [0x44E0_7000, 0x4804_C000, 0x481A_C000];
 const GPIO_REGISTER_SIZE: size_t = 0xFFF;
 
