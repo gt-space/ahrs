@@ -2,8 +2,6 @@ use spidev::{Spidev, SpidevOptions, SpiModeFlags};
 use spidev::spidevioctl::SpidevTransfer;
 use std::thread;
 use std::time::Duration;
-// use std::fs::File;
-// use std::io::Write;
 use gpio::{Gpio, Pin};
 use gpio::PinMode::Output;
 use gpio::PinValue::Low;
@@ -26,13 +24,6 @@ fn main() {
 	let clk = Pin::open(&gpio0, 36);
 	clk.mode(Output);
 	clk.digital_write(Low);
-
-	// let mut f = match File::create("log.txt") {
-	// 	Ok(f) => f,
-	// 	Err(e) => {
-	// 		panic!("{}", e);
-	// 	}
-	// };
 
 	loop {
 		readspi2([0x1C, 0x00], &spi, String::from("TEMP"));
@@ -68,8 +59,6 @@ fn readspi(tx_buf: [u8; 4], spi: &Spidev, s: String) {
         }
         Err(err) => println!("{:?}", err),
     }
-
-	// f.write_all(&rx_buf).expect("Failed writing to file");
 }
 
 fn readspi2(tx_buf: [u8; 2], spi: &Spidev, s: String) {
@@ -82,6 +71,4 @@ fn readspi2(tx_buf: [u8; 2], spi: &Spidev, s: String) {
         }
         Err(err) => println!("{:?}", err),
     }
-
-	// f.write_all(&rx_buf).expect("Failed writing to file");
 }
