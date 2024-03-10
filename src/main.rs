@@ -4,42 +4,75 @@ use std::thread;
 use std::time::Duration;
 
 fn main() {
-	let mut spi = Spidev::open("/dev/spidev0.0").unwrap();
+	let mut imu = Spidev::open("/dev/spidev0.0").unwrap();
 	let imu_options = SpidevOptions::new()
 		.lsb_first(false)
 		.bits_per_word(16)
 		.max_speed_hz(2_000_000)
 		.mode(SpiModeFlags::SPI_MODE_3)
 		.build();
-
-	spi.configure(&imu_options)
+	imu.configure(&imu_options)
 		.expect("failed to configure SPI for the IMU");
 
+	let mut mag = Spidev::open("/dev/spidev0.0").unwrap();
+	let mag_options = SpidevOptions::new()
+		.lsb_first(false)
+		.bits_per_word(8)
+		.max_speed_hz(10_000_000)
+		.mode(SpiModeFlags::SPI_MODE_0)
+		.build();
+	mag.configure(&mag_options)
+		.expect("failed to configure SPI for the magnetometer");
+
+	let mut bar = Spidev::open("/dev/spidev0.0").unwrap();
+	let bar_options = SpidevOptions::new()
+		.lsb_first(false)
+		.bits_per_word(8)
+		.max_speed_hz(20_000_000)
+		.mode(SpiModeFlags::SPI_MODE_0)
+		.build();
+	bar.configure(&bar_options)
+		.expect("failed to configure SPI for the barometer");
+
 	loop {
-		readspi2([0x1C, 0x00], &spi, String::from("TEMP"));
-		readspi2([0x1E, 0x00], &spi, String::from("TIME"));
+		// read_imu(&imu);
 
-		readspi([0x04, 0x00, 0x06, 0x00], &spi, String::from("X_GYRO"));
-		readspi([0x08, 0x00, 0x0A, 0x00], &spi, String::from("Y_GYRO"));
-		readspi([0x0C, 0x00, 0x0E, 0x00], &spi, String::from("Z_GYRO"));
-
-		readspi([0x10, 0x00, 0x12, 0x00], &spi, String::from("X_ACCL"));
-		readspi([0x14, 0x00, 0x16, 0x00], &spi, String::from("Y_ACCL"));
-		readspi([0x18, 0x00, 0x1A, 0x00], &spi, String::from("Z_ACCL"));
-
-		readspi([0x24, 0x00, 0x26, 0x00], &spi, String::from("X_DELTANG"));
-		readspi([0x28, 0x00, 0x2A, 0x00], &spi, String::from("Y_DELTANG"));
-		readspi([0x2C, 0x00, 0x2E, 0x00], &spi, String::from("Z_DELTANG"));
-
-		readspi([0x30, 0x00, 0x32, 0x00], &spi, String::from("X_DELTVEL"));
-		readspi([0x34, 0x00, 0x36, 0x00], &spi, String::from("Y_DELTVEL"));
-		readspi([0x38, 0x00, 0x3A, 0x00], &spi, String::from("Z_DELTVEL"));
+		let mut rx_buf = [0_u8; 4];
+		imu.write(&[0x04, 0x00, 0x06, 0x00])?;
+		imu.read(&mut rx_buf)?;
+		println!("{:?}", rx_buf);
 
 		thread::sleep(Duration::from_secs(2));
 	}
 }
 
-fn readspi(tx_buf: [u8; 4], spi: &Spidev, s: String) {
+fn read_imu(imu: &Spidev) {
+	// let mut rx_buf = [0_u8; 4];
+    // imu.write(&[0x01, 0x02, 0x03])?;
+    // imu.read(&mut rx_buf)?;
+    // println!("{:?}", rx_buf);
+
+	read_spi2([0x1C, 0x00], &imu, String::from("TEMP"));
+	// read_spi2([0x1E, 0x00], &imu, String::from("TIME"));
+
+	// read_spi4([0x04, 0x00, 0x06, 0x00], &imu, String::from("X_GYRO"));
+	// read_spi4([0x08, 0x00, 0x0A, 0x00], &imu, String::from("Y_GYRO"));
+	// read_spi4([0x0C, 0x00, 0x0E, 0x00], &imu, String::from("Z_GYRO"));
+
+	// read_spi4([0x10, 0x00, 0x12, 0x00], &imu, String::from("X_ACCL"));
+	// read_spi4([0x14, 0x00, 0x16, 0x00], &imu, String::from("Y_ACCL"));
+	// read_spi4([0x18, 0x00, 0x1A, 0x00], &imu, String::from("Z_ACCL"));
+
+	// read_spi4([0x24, 0x00, 0x26, 0x00], &imu, String::from("X_DELTANG"));
+	// read_spi4([0x28, 0x00, 0x2A, 0x00], &imu, String::from("Y_DELTANG"));
+	// read_spi4([0x2C, 0x00, 0x2E, 0x00], &imu, String::from("Z_DELTANG"));
+
+	// read_spi4([0x30, 0x00, 0x32, 0x00], &imu, String::from("X_DELTVEL"));
+	// read_spi4([0x34, 0x00, 0x36, 0x00], &imu, String::from("Y_DELTVEL"));
+	// read_spi4([0x38, 0x00, 0x3A, 0x00], &imu, String::from("Z_DELTVEL"));
+}
+
+fn read_spi4(tx_buf: [u8; 4], spi: &Spidev, s: String) {
 	let mut rx_buf = [0; 4];
 	let mut transfer = SpidevTransfer::read_write(&tx_buf, &mut rx_buf);
     let result = spi.transfer(&mut transfer);
@@ -51,7 +84,7 @@ fn readspi(tx_buf: [u8; 4], spi: &Spidev, s: String) {
     }
 }
 
-fn readspi2(tx_buf: [u8; 2], spi: &Spidev, s: String) {
+fn read_spi2(tx_buf: [u8; 2], spi: &Spidev, s: String) {
 	let mut rx_buf = [0; 2];
 	let mut transfer = SpidevTransfer::read_write(&tx_buf, &mut rx_buf);
     let result = spi.transfer(&mut transfer);
