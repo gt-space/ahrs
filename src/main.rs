@@ -2,6 +2,7 @@ use spidev::{Spidev, SpidevOptions, SpiModeFlags};
 use spidev::spidevioctl::SpidevTransfer;
 use std::thread;
 use std::time::Duration;
+use std::io::prelude::*;
 
 fn main() {
 	let mut imu = Spidev::open("/dev/spidev0.0").unwrap();
@@ -14,32 +15,23 @@ fn main() {
 	imu.configure(&imu_options)
 		.expect("failed to configure SPI for the IMU");
 
-	let mut mag = Spidev::open("/dev/spidev0.0").unwrap();
-	let mag_options = SpidevOptions::new()
-		.lsb_first(false)
-		.bits_per_word(8)
-		.max_speed_hz(10_000_000)
-		.mode(SpiModeFlags::SPI_MODE_0)
-		.build();
-	mag.configure(&mag_options)
-		.expect("failed to configure SPI for the magnetometer");
-
-	let mut bar = Spidev::open("/dev/spidev0.0").unwrap();
-	let bar_options = SpidevOptions::new()
-		.lsb_first(false)
-		.bits_per_word(8)
-		.max_speed_hz(20_000_000)
-		.mode(SpiModeFlags::SPI_MODE_0)
-		.build();
-	bar.configure(&bar_options)
-		.expect("failed to configure SPI for the barometer");
-
 	loop {
 		// read_imu(&imu);
 
-		let mut rx_buf = [0_u8; 4];
-		imu.write(&[0x04, 0x00, 0x06, 0x00])?;
-		imu.read(&mut rx_buf)?;
+		// let mut rx_buf = [0_u8; 2];
+		// imu.write(&[0x0C, 0x0E]).expect("Could not write tx buffer");
+		// imu.read(&mut rx_buf).expect("Could not read rx buffer");
+		// if rx_buf == [0_u8; 2] {
+		// 	println!("Failed to retrieve information over SPI");
+		// } else {
+		// 	println!("{:?}", rx_buf);
+		// }
+		let tx_buf = [0x04, 0x00, 0x06, 0x00];
+		let mut rx_buf = [0; 4];
+		{
+			let mut transfer = SpidevTransfer::read_write(&tx_buf, &mut rx_buf);
+			imu.transfer(&mut transfer).expect("Could not transfer over SPI");
+		}
 		println!("{:?}", rx_buf);
 
 		thread::sleep(Duration::from_secs(2));
