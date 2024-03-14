@@ -3,6 +3,7 @@ use spidev::spidevioctl::SpidevTransfer;
 use std::thread;
 use std::time::Duration;
 use std::io::prelude::*;
+pub mod gpio;
 
 fn main() {
 	let mut imu = Spidev::open("/dev/spidev0.0").unwrap();
@@ -15,6 +16,9 @@ fn main() {
 	imu.configure(&imu_options)
 		.expect("failed to configure SPI for the IMU");
 
+	gpio::set_output("36");
+	gpio::set_low("36");
+
 	loop {
 		// read_imu(&imu);
 
@@ -26,12 +30,14 @@ fn main() {
 		// } else {
 		// 	println!("{:?}", rx_buf);
 		// }
-		let tx_buf = [0x04, 0x00, 0x06, 0x00];
-		let mut rx_buf = [0; 4];
-		{
-			let mut transfer = SpidevTransfer::read_write(&tx_buf, &mut rx_buf);
-			imu.transfer(&mut transfer).expect("Could not transfer over SPI");
-		}
+		let tx_buf = [0x0C, 0x00];
+		let mut rx_buf = [0; 2];
+		imu.write(&tx_buf).expect("Failed writing to SPI");
+		imu.read(&mut rx_buf).expect("Failed reading from SPI");
+		// {
+		// 	let mut transfer = SpidevTransfer::read_write(&tx_buf, &mut rx_buf);
+		// 	imu.transfer(&mut transfer).expect("Could not transfer over SPI");
+		// }
 		println!("{:?}", rx_buf);
 
 		thread::sleep(Duration::from_secs(2));
