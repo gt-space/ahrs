@@ -2,7 +2,6 @@ use spidev::{Spidev, SpidevOptions, SpiModeFlags};
 use spidev::spidevioctl::SpidevTransfer;
 use std::thread;
 use std::time::Duration;
-use std::io::prelude::*;
 pub mod gpio;
 
 fn main() {
@@ -16,34 +15,43 @@ fn main() {
 	// spidev.configure(&spidev_options)
 	// 	.expect("failed to configure SPI for the IMU");
 
-	let mut spidev = Spidev::open("/dev/spidev0.0").unwrap();
+	let mut spi = Spidev::open("/dev/spidev0.0").unwrap();
 	let options = SpidevOptions::new()
 		.bits_per_word(8)
-		.max_speed_hz(2_000_000)
+		.max_speed_hz(10_000_000)
 		.lsb_first(false)
 		.mode(SpiModeFlags::SPI_MODE_3)
 		.build();
-	spidev.configure(&options).unwrap();
+	spi.configure(&options).unwrap();
 
-	default_gpio();
-
+	gpio::set_output("47");
+	gpio::set_high("47");
+	gpio::set_output("62");
+	gpio::set_high("62");
+	gpio::set_output("67");
+	gpio::set_high("67");
+	gpio::set_output("68");
+	gpio::set_high("68");
 	gpio::set_output("36");
-	gpio::set_low("36");
+	gpio::set_high("36");
 
-	// 0xE880, then 0xE900
-	let tx_buf = [0xE8, 0x80];
-	let mut rx_buf = [0; 2];
-	let mut transfer = SpidevTransfer::read_write(&tx_buf, &mut rx_buf);
-	spidev.transfer(&mut transfer).expect("Could not transfer over SPI");
-	println!("{:?}", rx_buf);
+	gpio::set_output("68");
+	gpio::set_low("68");
 
-	let tx_buf = [0xE9, 0x00];
-	let mut rx_buf = [0; 2];
-	let mut transfer = SpidevTransfer::read_write(&tx_buf, &mut rx_buf);
-	spidev.transfer(&mut transfer).expect("Could not transfer over SPI");
-	println!("{:?}", rx_buf);
+	// // 0xE880, then 0xE900
+	// let tx_buf = [0xE8, 0x80];
+	// let mut rx_buf = [0; 2];
+	// let mut transfer = SpidevTransfer::read_write(&tx_buf, &mut rx_buf);
+	// spidev.transfer(&mut transfer).expect("Could not transfer over SPI");
+	// println!("{:?}", rx_buf);
 
-	thread::sleep(Duration::from_secs(5));
+	// let tx_buf = [0xE9, 0x00];
+	// let mut rx_buf = [0; 2];
+	// let mut transfer = SpidevTransfer::read_write(&tx_buf, &mut rx_buf);
+	// spidev.transfer(&mut transfer).expect("Could not transfer over SPI");
+	// println!("{:?}", rx_buf);
+
+	// thread::sleep(Duration::from_secs(5));
 
 	loop {
 		// read_imu(&imu);
@@ -56,12 +64,12 @@ fn main() {
 		// } else {
 		// 	println!("{:?}", rx_buf);
 		// }
-		let tx_buf = [0x60, 0x00, 0x00, 0x00];
-		let mut rx_buf = [0; 4];
+		let tx_buf = [0x20, 0x22];
+		let mut rx_buf = [0; 2];
 		// spidev.write(&tx_buf).expect("Failed writing to SPI");
 		// spidev.read(&mut rx_buf).expect("Failed reading from SPI");
 		let mut transfer = SpidevTransfer::read_write(&tx_buf, &mut rx_buf);
-		spidev.transfer(&mut transfer).expect("Could not transfer over SPI");
+		spi.transfer(&mut transfer).expect("Could not transfer over SPI");
 		println!("{:?}", rx_buf);
 
 		thread::sleep(Duration::from_micros(100));
@@ -116,25 +124,4 @@ fn read_spi2(tx_buf: [u8; 2], spi: &Spidev, s: String) {
         }
         Err(err) => println!("{:?}", err),
     }
-}
-
-fn default_gpio() {
-	// let pins = vec![2,3,4,5,7,8,9,10,11,12,13,14,15,19,20,22,23,26,27,30,31,32,33,34,35,36,37,38,39,44,45,46,47,48,49,50,51,60,61,62,63,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,86,87,88,89,110,111,112,113,114,115,116,117];
-	let pins = vec![5,7,8,9,10,11,12,13,14,15,19,20,22,23,26,27,30,31,32,33,34,35,36,37,38,39,44,45,46,47,48,49,50,51,60,61,62,63,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,86,87,88,89,110,111,112,113,114,115,116,117];
-
-	// gpio::set_output("2");
-	// gpio::set_low("2");
-	// gpio::set_input("2");
-	// gpio::set_output("3");
-	// gpio::set_low("3");
-	// gpio::set_input("3");
-	// gpio::set_output("4");
-	// gpio::set_low("4");
-	// gpio::set_input("4");
-
-	for pin in pins.iter() {
-		let pin_s = pin.to_string();
-		gpio::set_output(&pin_s);
-		gpio::set_high(&pin_s);
-	}
 }

@@ -2,7 +2,9 @@
 
 # P8 GPIO
 config-pin p8.53 gpio
+config-pin p8.54 gpio
 config-pin p8.55 gpio
+config-pin p8.56 gpio
 config-pin p8.57 gpio
 config-pin p8.59 gpio
 config-pin p8.61 gpio
