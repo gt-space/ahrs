@@ -17,26 +17,26 @@ fn main() {
 
 	let mut spi = Spidev::open("/dev/spidev0.0").unwrap();
 	let options = SpidevOptions::new()
-		.bits_per_word(8)
-		.max_speed_hz(10_000_000)
+		.bits_per_word(16)
+		.max_speed_hz(2_000_000)
 		.lsb_first(false)
 		.mode(SpiModeFlags::SPI_MODE_3)
 		.build();
 	spi.configure(&options).unwrap();
 
-	gpio::set_output("47");
-	gpio::set_high("47");
-	gpio::set_output("62");
-	gpio::set_high("62");
-	gpio::set_output("67");
-	gpio::set_high("67");
-	gpio::set_output("68");
-	gpio::set_high("68");
-	gpio::set_output("36");
-	gpio::set_high("36");
+	// gpio::set_output("47");
+	// gpio::set_high("47");
+	// gpio::set_output("62");
+	// gpio::set_high("62");
+	// gpio::set_output("67");
+	// gpio::set_high("67");
+	// gpio::set_output("68");
+	// gpio::set_high("68");
+	// gpio::set_output("36");
+	// gpio::set_high("36");
 
 	gpio::set_output("68");
-	gpio::set_low("68");
+	gpio::set_low("36");
 
 	// // 0xE880, then 0xE900
 	// let tx_buf = [0xE8, 0x80];
@@ -64,7 +64,7 @@ fn main() {
 		// } else {
 		// 	println!("{:?}", rx_buf);
 		// }
-		let tx_buf = [0x20, 0x22];
+		let tx_buf: [u8; 2] = [0x0C, 0x00];
 		let mut rx_buf = [0; 2];
 		// spidev.write(&tx_buf).expect("Failed writing to SPI");
 		// spidev.read(&mut rx_buf).expect("Failed reading from SPI");
